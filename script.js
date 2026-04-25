@@ -2,43 +2,44 @@ const gameArea = document.getElementById("gameArea");
 const scoreDisplay = document.getElementById("score");
 const startBtn = document.getElementById("startBtn");
 
-let player = { speed: 4, score: 0, start: false };
-let keys = { ArrowLeft: false, ArrowRight: false };
+let player = { speed: 5, score: 0, start: false };
+let keys = {};
 
 let car;
 
-/* ALERT BEFORE START */
+/* SHOW ALERT */
 alert("Better to play in laptops for best experience!");
 
+/* START GAME */
 startBtn.addEventListener("click", startGame);
 
-/* START GAME */
 function startGame() {
     gameArea.innerHTML = "";
     player.start = true;
     player.score = 0;
-    player.speed = 4;
+    player.speed = 5;
 
     startBtn.style.display = "none";
 
-    /* create player car */
+    /* Create car */
     car = document.createElement("div");
     car.classList.add("car");
+    car.style.left = "200px";
     gameArea.appendChild(car);
 
-    /* road lines */
+    /* Road lines */
     for (let i = 0; i < 6; i++) {
         let line = document.createElement("div");
         line.classList.add("line");
-        line.style.top = (i * 120) + "px";
+        line.style.top = (i * 150) + "px";
         gameArea.appendChild(line);
     }
 
-    /* enemy cars */
+    /* Enemy cars */
     for (let i = 0; i < 3; i++) {
         let enemy = document.createElement("div");
         enemy.classList.add("enemy");
-        enemy.style.left = Math.floor(Math.random() * 340) + "px";
+        enemy.style.left = Math.floor(Math.random() * 400) + "px";
         enemy.style.top = (i * -250) + "px";
         gameArea.appendChild(enemy);
     }
@@ -46,34 +47,35 @@ function startGame() {
     window.requestAnimationFrame(gamePlay);
 }
 
-/* KEY CONTROL */
-document.addEventListener("keydown", e => {
+/* KEY EVENTS */
+document.addEventListener("keydown", (e) => {
     keys[e.key] = true;
 });
-document.addEventListener("keyup", e => {
+
+document.addEventListener("keyup", (e) => {
     keys[e.key] = false;
 });
 
-/* MOVE ROAD */
+/* MOVE LINES */
 function moveLines() {
     document.querySelectorAll(".line").forEach(line => {
         let top = parseInt(line.style.top);
         top += player.speed;
 
-        if (top > 650) top = -120;
+        if (top > 700) top = -150;
         line.style.top = top + "px";
     });
 }
 
-/* MOVE ENEMY */
+/* MOVE ENEMIES */
 function moveEnemies() {
     document.querySelectorAll(".enemy").forEach(enemy => {
         let top = parseInt(enemy.style.top);
         top += player.speed;
 
-        if (top > 650) {
+        if (top > 700) {
             top = -250;
-            enemy.style.left = Math.floor(Math.random() * 340) + "px";
+            enemy.style.left = Math.floor(Math.random() * 400) + "px";
             player.score++;
         }
 
@@ -102,23 +104,18 @@ function isCollide(a, b) {
 function gamePlay() {
     if (!player.start) return;
 
-    let carRect = car.getBoundingClientRect();
-    let areaRect = gameArea.getBoundingClientRect();
+    let carLeft = car.offsetLeft;
 
-    if (keys.ArrowLeft && carRect.left > areaRect.left) {
-        car.style.left = car.offsetLeft - player.speed + "px";
+    if (keys["ArrowLeft"] && carLeft > 0) {
+        car.style.left = (carLeft - player.speed) + "px";
     }
-    if (keys.ArrowRight && carRect.right < areaRect.right) {
-        car.style.left = car.offsetLeft + player.speed + "px";
+
+    if (keys["ArrowRight"] && carLeft < 400) {
+        car.style.left = (carLeft + player.speed) + "px";
     }
 
     moveLines();
     moveEnemies();
-
-    /* gradual speed increase */
-    if (player.score % 5 === 0) {
-        player.speed += 0.005;
-    }
 
     scoreDisplay.innerText = player.score;
 
@@ -128,6 +125,7 @@ function gamePlay() {
 /* END GAME */
 function endGame() {
     player.start = false;
+
     alert("💥 Game Over! Score: " + player.score);
 
     startBtn.innerText = "Restart Game";
