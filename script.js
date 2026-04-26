@@ -7,36 +7,42 @@ let keys = {};
 
 let car;
 
-/* NITRO SYSTEM */
+/* NITRO */
 let nitro = {
     active: false,
-    value: 100,     // fuel %
+    value: 100,
     max: 100
 };
 
-/* ALERT */
-alert("Better to play in laptops for best experience!\nUse SHIFT for Nitro 🚀");
+/* POLICE */
+let police = {
+    active: false,
+    car: null
+};
 
-/* START GAME */
+alert("Better to play in laptops\nSHIFT = Nitro 🚀");
+
+/* START */
 startBtn.addEventListener("click", startGame);
 
 function startGame() {
     gameArea.innerHTML = "";
     player.start = true;
     player.score = 0;
-    player.speed = 8;
+    player.speed = 5;
+
     nitro.value = 100;
-    nitro.active = false;
+    police.active = false;
 
     startBtn.style.display = "none";
 
-    /* Create car */
+    /* PLAYER CAR */
     car = document.createElement("div");
     car.classList.add("car");
     car.style.left = "200px";
     gameArea.appendChild(car);
 
-    /* Nitro Bar */
+    /* NITRO BAR */
     let nitroBar = document.createElement("div");
     nitroBar.id = "nitroBar";
     nitroBar.style.position = "absolute";
@@ -46,7 +52,7 @@ function startGame() {
     nitroBar.style.background = "cyan";
     gameArea.appendChild(nitroBar);
 
-    /* Road lines */
+    /* ROAD LINES */
     for (let i = 0; i < 6; i++) {
         let line = document.createElement("div");
         line.classList.add("line");
@@ -54,7 +60,7 @@ function startGame() {
         gameArea.appendChild(line);
     }
 
-    /* Enemy cars */
+    /* ENEMIES */
     for (let i = 0; i < 3; i++) {
         let enemy = document.createElement("div");
         enemy.classList.add("enemy");
@@ -67,19 +73,59 @@ function startGame() {
 }
 
 /* KEYS */
-document.addEventListener("keydown", (e) => {
-    keys[e.key] = true;
-});
-document.addEventListener("keyup", (e) => {
-    keys[e.key] = false;
-});
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
+
+/* POLICE SPAWN */
+function spawnPolice() {
+    police.active = true;
+
+    police.car = document.createElement("div");
+    police.car.style.width = "50px";
+    police.car.style.height = "90px";
+    police.car.style.background = "blue";
+    police.car.style.position = "absolute";
+    police.car.style.top = "-120px";
+    police.car.style.left = car.offsetLeft + "px";
+    police.car.style.borderRadius = "10px";
+
+    gameArea.appendChild(police.car);
+}
+
+/* MOVE POLICE */
+function movePolice(speed) {
+    if (!police.active) return;
+
+    let p = police.car;
+
+    /* move down */
+    let top = parseInt(p.style.top);
+    top += speed + 1; // slightly faster
+    p.style.top = top + "px";
+
+    /* follow player (simple AI) */
+    let playerX = car.offsetLeft;
+    let policeX = p.offsetLeft;
+
+    if (policeX < playerX) p.style.left = (policeX + 2) + "px";
+    if (policeX > playerX) p.style.left = (policeX - 2) + "px";
+
+    /* collision */
+    if (isCollide(car, p)) {
+        endGame("🚓 Caught by Police!");
+    }
+
+    /* reset if passed */
+    if (top > 700) {
+        p.style.top = "-120px";
+    }
+}
 
 /* MOVE LINES */
 function moveLines(speed) {
     document.querySelectorAll(".line").forEach(line => {
         let top = parseInt(line.style.top);
         top += speed;
-
         if (top > 700) top = -150;
         line.style.top = top + "px";
     });
@@ -100,7 +146,7 @@ function moveEnemies(speed) {
         enemy.style.top = top + "px";
 
         if (isCollide(car, enemy)) {
-            endGame();
+            endGame("💥 Crashed!");
         }
     });
 }
@@ -124,7 +170,7 @@ function gamePlay() {
 
     let baseSpeed = player.speed;
 
-    /* NITRO ACTIVATION */
+    /* NITRO */
     if (keys["Shift"] && nitro.value > 0) {
         nitro.active = true;
         nitro.value -= 1;
@@ -133,36 +179,41 @@ function gamePlay() {
         if (nitro.value < nitro.max) nitro.value += 0.5;
     }
 
-    let currentSpeed = nitro.active ? baseSpeed * 2 : baseSpeed;
+    let speed = nitro.active ? baseSpeed * 2 : baseSpeed;
 
-    /* MOVE CAR */
+    /* PLAYER MOVE */
     let carLeft = car.offsetLeft;
 
     if (keys["ArrowLeft"] && carLeft > 0) {
-        car.style.left = (carLeft - currentSpeed) + "px";
+        car.style.left = (carLeft - speed) + "px";
     }
 
     if (keys["ArrowRight"] && carLeft < 400) {
-        car.style.left = (carLeft + currentSpeed) + "px";
+        car.style.left = (carLeft + speed) + "px";
     }
 
-    moveLines(currentSpeed);
-    moveEnemies(currentSpeed);
+    /* SPAWN POLICE AFTER SCORE */
+    if (player.score > 5 && !police.active) {
+        spawnPolice();
+    }
 
-    /* UPDATE NITRO BAR */
-    let nitroBar = document.getElementById("nitroBar");
-    nitroBar.style.width = nitro.value + "%";
+    moveLines(speed);
+    moveEnemies(speed);
+    movePolice(speed);
+
+    /* NITRO BAR */
+    document.getElementById("nitroBar").style.width = nitro.value + "%";
 
     scoreDisplay.innerText = player.score;
 
-    window.requestAnimationFrame(gamePlay);
+    requestAnimationFrame(gamePlay);
 }
 
 /* END GAME */
-function endGame() {
+function endGame(msg) {
     player.start = false;
 
-    alert("💥 Game Over! Score: " + player.score);
+    alert(msg + " | Score: " + player.score);
 
     startBtn.innerText = "Restart Game";
     startBtn.style.display = "inline-block";
