@@ -34,6 +34,7 @@ function startGame() {
     car = document.createElement("div");
     car.classList.add("car");
     car.style.left = "200px";
+    car.style.top = "500px"; // 🔥 important
     gameArea.appendChild(car);
 
     /* NITRO BAR */
@@ -83,44 +84,54 @@ function spawnPolice() {
     police.car = document.createElement("div");
     police.car.classList.add("police");
 
-    police.car.style.top = "700px";
-    police.car.style.left = (car.offsetLeft + (Math.random() * 60 - 30)) + "px";
+    /* spawn BELOW player (but not instant collision) */
+    police.car.style.top = "650px";
+    police.car.style.left = (car.offsetLeft + (Math.random() * 120 - 60)) + "px";
 
     police.timer = 0;
 
     gameArea.appendChild(police.car);
 }
 
-/* POLICE MOVE (ESCAPABLE) */
 function movePolice(speed) {
     if (!police.active) return;
 
     let p = police.car;
 
     let top = parseInt(p.style.top);
-    top -= (speed + 1);
+
+    /* slower upward chase */
+    top -= (speed * 0.7);
     p.style.top = top + "px";
 
     let playerX = car.offsetLeft;
     let policeX = p.offsetLeft;
 
-    let followSpeed = 1.5;
+    /* weak tracking (ESCAPABLE) */
+    let followSpeed = 0.7;
 
-    if (Math.random() > 0.3) {
+    if (Math.random() > 0.65) {
         if (policeX < playerX) p.style.left = (policeX + followSpeed) + "px";
         if (policeX > playerX) p.style.left = (policeX - followSpeed) + "px";
     }
 
-    if (isCollide(car, p)) {
+    /* collision only when really near */
+    if (top > 460 && isCollide(car, p)) {
         endGame("🚓 Caught by Police!");
     }
 
-    if (top < -120 || police.timer > 600) {
+    /* escape */
+    if (top < -120) {
         police.active = false;
         p.remove();
     }
 
+    /* shorter chase */
     police.timer++;
+    if (police.timer > 350) {
+        police.active = false;
+        p.remove();
+    }
 }
 
 /* LINES */
