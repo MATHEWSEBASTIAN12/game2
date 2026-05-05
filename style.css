@@ -30,7 +30,7 @@ h1 { margin: 10px; }
     height: 90px;
     background: red;
     position: absolute;
-    bottom: 20px;
+    top: 500px; /* 🔥 moves car upward */
     left: 200px;
     border-radius: 10px;
 }
